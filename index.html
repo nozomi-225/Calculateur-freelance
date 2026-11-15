@@ -17,23 +17,11 @@
             background-color: #000091;
             color: #ffffff;
             padding: 15px 20px;
-            position: relative; 
             text-align: center; 
         }
         header h1 {
             margin: 0;
             font-size: 1.2rem;
-        }
-        .btn-header {
-            color: #ffffff;
-            background: none;
-            border: none;
-            font-size: 1.5rem;
-            cursor: pointer;
-            position: absolute;
-            right: 20px;
-            top: 50%;
-            transform: translateY(-50%); 
         }
         .container {
             max-width: 500px;
@@ -74,6 +62,10 @@
             display: flex;
             align-items: center;
             margin-top: 15px;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border-radius: 6px;
+            border: 1px solid #e5e5e5;
         }
         input[type="checkbox"] {
             transform: scale(1.5);
@@ -110,22 +102,8 @@
             margin-bottom: 15px;
             font-weight: bold;
         }
-        .btn-primary {
-            display: block;
-            width: 100%;
-            background-color: #000091;
-            color: #ffffff;
-            text-align: center;
-            padding: 15px;
-            border-radius: 6px;
-            border: none;
-            font-weight: bold;
-            font-size: 1rem;
-            margin-top: 20px;
-            cursor: pointer;
-        }
         
-        #ecran-parametres {
+        #blocConjoint, #blocUrssafAcre {
             display: none;
         }
     </style>
@@ -134,98 +112,105 @@
 
     <header>
         <h1 id="titre-app">Calculateur BNC Freelance</h1>
-        <button class="btn-header" id="btn-navigation" onclick="changerEcran()">⚙️</button>
     </header>
 
     <div class="container">
         
-        <div id="ecran-principal">
-            <div class="card">
-                <h2>Calcul mensuel</h2>
-                
-                <label for="tjm">Mon TJM (en euros)</label>
-                <input type="number" id="tjm" placeholder="Ex: 350" oninput="calculerResultats()">
-                
-                <label for="jours">Jours travaillés dans le mois</label>
-                <input type="number" id="jours" placeholder="Ex: 15" oninput="calculerResultats()">
-            </div>
-
-            <div class="card">
-                <h2>Résultats</h2>
-                
-                <div class="result-line">
-                    <span>Chiffre d'Affaires Brut :</span>
-                    <span id="affichageCa">0.00 €</span>
-                </div>
-                
-                <div class="result-line">
-                    <span>Cotisation URSSAF :</span>
-                    <span id="affichageUrssaf">0.00 €</span>
-                </div>
-                
-                <div class="result-line">
-                    <span>Provision Impôt (IR) :</span>
-                    <span id="affichageImpot">0.00 €</span>
-                </div>
-                
-                <div class="result-line net-result">
-                    <span>Reste à vivre (Net) :</span>
-                    <span id="affichageNet">0.00 €</span>
-                </div>
-                <p class="notes">L'impôt calculé représente la part exacte due à votre activité freelance, en tenant compte de vos autres revenus.</p>
-                
-            </div>
+        <div class="card">
+            <h2>Calcul mensuel</h2>
+            <div class="statut-badge">Statut : BNC (Abattement 34%)</div>
+            
+            <label for="tjm">Mon TJM (en euros)</label>
+            <input type="number" id="tjm" placeholder="Ex: 350" oninput="calculerResultats()">
+            
+            <label for="jours">Jours travaillés dans le mois</label>
+            <input type="number" id="jours" placeholder="Ex: 15" oninput="calculerResultats()">
         </div>
 
-        <div id="ecran-parametres">
-            <div class="card">
-                <h2>Paramètres (Sauvegardés)</h2>
-                <p class="notes">Ces données permettent au simulateur d'appliquer le barème de l'impôt sur le revenu avec précision.</p>
-                
-                <div class="checkbox-container">
-                    <input type="checkbox" id="acreActive" onchange="sauvegarderParametres()">
-                    <label for="acreActive" style="margin-top: 0;">Option ACRE activée</label>
-                </div>
-                
-                <label for="tauxUrssafNormal">Taux URSSAF standard (%)</label>
-                <input type="number" id="tauxUrssafNormal" step="0.1" oninput="sauvegarderParametres()">
-                
-                <label for="tauxUrssafAcre">Taux URSSAF avec ACRE (%)</label>
-                <input type="number" id="tauxUrssafAcre" step="0.1" oninput="sauvegarderParametres()">
-                
-                <label for="autresRevenus">Autres revenus nets mensuels (€)</label>
-                <p class="notes">Pour le calcul du barème de l'impôt (ex: locatif).</p>
-                <input type="number" id="autresRevenus" oninput="sauvegarderParametres()">
+        <div class="card">
+            <h2>Résultats</h2>
+            
+            <div class="result-line">
+                <span>Chiffre d'Affaires Brut :</span>
+                <span id="affichageCa">0.00 €</span>
             </div>
             
-            <button class="btn-primary" onclick="changerEcran()">Enregistrer et Retour</button>
+            <div class="result-line">
+                <span>Cotisation URSSAF :</span>
+                <span id="affichageUrssaf">- 0.00 €</span>
+            </div>
+            
+            <div class="result-line">
+                <span>Provision Impôt (IR) :</span>
+                <span id="affichageImpot">- 0.00 €</span>
+            </div>
+            
+            <div class="result-line net-result">
+                <span>Reste à vivre (Net) :</span>
+                <span id="affichageNet">0.00 €</span>
+            </div>
+            
+            <!-- Paragraphe dynamique pour le message -->
+            <p id="messagePersonnalise" style="text-align: center; font-weight: bold; margin-top: 15px;"></p>
+
+            <p class="notes">L'impôt calculé représente la part exacte due à ton activité freelance, en tenant compte des hypothèses ci-dessous.</p>
+        </div>
+
+        <div class="card">
+            <h2>Hypothèses & Paramètres</h2>
+            <p class="notes">Modifie ces valeurs pour affiner le calcul. Elles sont sauvegardées sur ton téléphone.</p>
+            
+            <div class="checkbox-container">
+                <input type="checkbox" id="acreActive" onchange="sauvegarderParametres()">
+                <label for="acreActive" style="margin-top: 0;">Option ACRE activée</label>
+            </div>
+            
+            <div class="checkbox-container">
+                <input type="checkbox" id="estMarie" onchange="sauvegarderParametres()">
+                <label for="estMarie" style="margin-top: 0;">Marié(e) ou Pacsé(e) (2 parts)</label>
+            </div>
+
+            <label for="revenusLocatifs">Mes revenus locatifs nets mensuels (€)</label>
+            <input type="number" id="revenusLocatifs" oninput="sauvegarderParametres()">
+
+            <div id="blocConjoint">
+                <label for="revenusConjoint">Salaire net mensuel du conjoint (€)</label>
+                <input type="number" id="revenusConjoint" oninput="sauvegarderParametres()">
+            </div>
+            
+            <div id="blocUrssafNormal">
+                <label for="tauxUrssafNormal">Taux URSSAF standard (%)</label>
+                <input type="number" id="tauxUrssafNormal" step="0.1" oninput="sauvegarderParametres()">
+            </div>
+            
+            <div id="blocUrssafAcre">
+                <label for="tauxUrssafAcre">Taux URSSAF avec ACRE (%)</label>
+                <input type="number" id="tauxUrssafAcre" step="0.1" oninput="sauvegarderParametres()">
+            </div>
         </div>
 
     </div>
 
     <script>
-        function changerEcran() {
-            var ecranPrincipal = document.getElementById("ecran-principal");
-            var ecranParametres = document.getElementById("ecran-parametres");
-            var titreApp = document.getElementById("titre-app");
-            var btnNavigation = document.getElementById("btn-navigation");
-
-            if (ecranParametres.style.display === "none" || ecranParametres.style.display === "") {
-                ecranParametres.style.display = "block";
-                ecranPrincipal.style.display = "none";
-                titreApp.innerText = "Paramètres";
-                btnNavigation.innerText = "⬅️";
+        function actualiserAffichage() {
+            if (document.getElementById("estMarie").checked === true) {
+                document.getElementById("blocConjoint").style.display = "block";
             } else {
-                ecranParametres.style.display = "none";
-                ecranPrincipal.style.display = "block";
-                titreApp.innerText = "Calculateur BNC Freelance";
-                btnNavigation.innerText = "⚙️";
+                document.getElementById("blocConjoint").style.display = "none";
+            }
+
+            if (document.getElementById("acreActive").checked === true) {
+                document.getElementById("blocUrssafAcre").style.display = "block";
+                document.getElementById("blocUrssafNormal").style.display = "none";
+            } else {
+                document.getElementById("blocUrssafAcre").style.display = "none";
+                document.getElementById("blocUrssafNormal").style.display = "block";
             }
         }
 
         function chargerParametres() {
             var tjmSauvegarde = localStorage.getItem("tjm");
-            if (tjmSauvegarde !== null) {
+            if (tjmSauvegarde !== null && tjmSauvegarde !== "0") {
                 document.getElementById("tjm").value = tjmSauvegarde;
             }
 
@@ -237,9 +222,13 @@
             if (tauxAcre !== null) document.getElementById("tauxUrssafAcre").value = tauxAcre;
             else document.getElementById("tauxUrssafAcre").value = "19.2";
 
-            var autresRevenus = localStorage.getItem("autresRevenus");
-            if (autresRevenus !== null) document.getElementById("autresRevenus").value = autresRevenus;
-            else document.getElementById("autresRevenus").value = "610";
+            var revenusLocatifs = localStorage.getItem("revenusLocatifs");
+            if (revenusLocatifs !== null) document.getElementById("revenusLocatifs").value = revenusLocatifs;
+            else document.getElementById("revenusLocatifs").value = "610";
+
+            var revenusConjoint = localStorage.getItem("revenusConjoint");
+            if (revenusConjoint !== null) document.getElementById("revenusConjoint").value = revenusConjoint;
+            else document.getElementById("revenusConjoint").value = "0";
 
             var acreActive = localStorage.getItem("acreActive");
             if (acreActive === "oui") {
@@ -247,18 +236,36 @@
             } else {
                 document.getElementById("acreActive").checked = false;
             }
+
+            var estMarie = localStorage.getItem("estMarie");
+            if (estMarie === "oui") {
+                document.getElementById("estMarie").checked = true;
+            } else {
+                document.getElementById("estMarie").checked = false;
+            }
+
+            actualiserAffichage(); 
         }
 
         function sauvegarderParametres() {
             localStorage.setItem("tauxUrssafNormal", document.getElementById("tauxUrssafNormal").value);
             localStorage.setItem("tauxUrssafAcre", document.getElementById("tauxUrssafAcre").value);
-            localStorage.setItem("autresRevenus", document.getElementById("autresRevenus").value);
+            localStorage.setItem("revenusLocatifs", document.getElementById("revenusLocatifs").value);
+            localStorage.setItem("revenusConjoint", document.getElementById("revenusConjoint").value);
             
             if (document.getElementById("acreActive").checked === true) {
                 localStorage.setItem("acreActive", "oui");
             } else {
                 localStorage.setItem("acreActive", "non");
             }
+
+            if (document.getElementById("estMarie").checked === true) {
+                localStorage.setItem("estMarie", "oui");
+            } else {
+                localStorage.setItem("estMarie", "non");
+            }
+
+            actualiserAffichage(); 
             calculerResultats();
         }
 
@@ -295,15 +302,15 @@
                 champJours.value = 31;
             }
 
-            if (isNaN(tjm)) tjm = 0;
-            if (isNaN(jours)) jours = 0;
-            
             if (champTjm.value !== "") {
                 localStorage.setItem("tjm", champTjm.value);
             } else {
                 localStorage.removeItem("tjm");
             }
 
+            if (isNaN(tjm)) tjm = 0;
+            if (isNaN(jours)) jours = 0;
+            
             var chiffreAffaires = tjm * jours;
 
             var tauxUrssaf = 0;
@@ -315,15 +322,32 @@
             
             var montantUrssaf = chiffreAffaires * (tauxUrssaf / 100);
 
-            var autresRevenusMensuels = parseFloat(document.getElementById("autresRevenus").value);
-            if (isNaN(autresRevenusMensuels)) autresRevenusMensuels = 0;
+            var locatifs = parseFloat(document.getElementById("revenusLocatifs").value);
+            if (isNaN(locatifs)) locatifs = 0;
+
+            var conjoint = 0;
+            if (document.getElementById("estMarie").checked === true) {
+                conjoint = parseFloat(document.getElementById("revenusConjoint").value);
+                if (isNaN(conjoint)) conjoint = 0;
+            }
+
+            var autresRevenusMensuels = locatifs + conjoint;
+
+            var partsFiscales = 1;
+            if (document.getElementById("estMarie").checked === true) {
+                partsFiscales = 2;
+            }
 
             var autresRevenusAnnuels = autresRevenusMensuels * 12;
             var beneficeBncAnnuel = (chiffreAffaires * 12) * 0.66;
             var revenuGlobalAnnuel = autresRevenusAnnuels + beneficeBncAnnuel;
 
-            var impotTotalAnnuel = calculerImpotAnnuel(revenuGlobalAnnuel);
-            var impotSansFreelance = calculerImpotAnnuel(autresRevenusAnnuels);
+            var quotientGlobal = revenuGlobalAnnuel / partsFiscales;
+            var impotTotalAnnuel = calculerImpotAnnuel(quotientGlobal) * partsFiscales;
+            
+            var quotientSansFreelance = autresRevenusAnnuels / partsFiscales;
+            var impotSansFreelance = calculerImpotAnnuel(quotientSansFreelance) * partsFiscales;
+            
             var impotLieAuFreelanceAnnuel = impotTotalAnnuel - impotSansFreelance;
             
             var montantImpot = impotLieAuFreelanceAnnuel / 12;
@@ -334,6 +358,23 @@
             document.getElementById("affichageUrssaf").innerText = "- " + montantUrssaf.toFixed(2) + " €";
             document.getElementById("affichageImpot").innerText = "- " + montantImpot.toFixed(2) + " €";
             document.getElementById("affichageNet").innerText = resteAVivre.toFixed(2) + " €";
+
+            var champMessage = document.getElementById("messagePersonnalise");
+
+            if (chiffreAffaires === 0) {
+                champMessage.innerText = ""; 
+            } 
+            else if (resteAVivre >= 10000) { 
+                champMessage.innerText = "Ah ouais ça vit hein 😎";
+                champMessage.style.color = "#1e8449"; // Vert
+            } 
+            else if (resteAVivre <= 5000) { 
+                champMessage.innerText = "Damn !! MACRON EXPLOSION 💥";
+                champMessage.style.color = "#c0392b"; // Rouge
+            } 
+            else {
+                champMessage.innerText = "";
+            }
         }
 
         window.onload = function() {
