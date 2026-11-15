@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculateur BNC Freelance</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #ffffff;
+            color: #1e1e1e;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background-color: #000091;
+            color: #ffffff;
+            padding: 20px;
+            text-align: center;
+        }
+        h1 {
+            margin: 0;
+            font-size: 1.5rem;
+        }
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .card {
+            border: 1px solid #e5e5e5;
+            padding: 20px;
+            margin-bottom: 25px;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        h2 {
+            color: #000091;
+            font-size: 1.2rem;
+            margin-top: 0;
+            border-bottom: 2px solid #e5e5e5;
+            padding-bottom: 10px;
+        }
+        label {
+            display: block;
+            margin-top: 15px;
+            font-weight: bold;
+        }
+        input[type="number"] {
+            width: 100%;
+            padding: 12px;
+            margin-top: 8px;
+            border: 1px solid #7a7a7a;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            margin-top: 15px;
+            font-weight: bold;
+        }
+        input[type="checkbox"] {
+            transform: scale(1.5);
+            margin-right: 15px;
+        }
+        .result-line {
+            display: flex;
+            justify-content: space-between;
+            margin: 15px 0;
+            font-size: 1.1rem;
+        }
+        .net-result {
+            font-weight: bold;
+            font-size: 1.4rem;
+            color: #000091;
+            border-top: 2px solid #000091;
+            padding-top: 15px;
+            margin-top: 15px;
+        }
+        .notes {
+            font-size: 0.85rem;
+            color: #666;
+            margin-top: 5px;
+            line-height: 1.4;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Calculateur BNC Freelance</h1>
+    </header>
+
+    <div class="container">
+        
+        <!-- Écran principal -->
+        <div class="card">
+            <h2>Calcul mensuel</h2>
+            
+            <label for="tjm">Mon TJM (en euros)</label>
+            <input type="number" id="tjm" placeholder="Ex: 350" oninput="calculerResultats()">
+            
+            <label for="jours">Jours travaillés dans le mois</label>
+            <input type="number" id="jours" placeholder="Ex: 15" oninput="calculerResultats()">
+        </div>
+
+        <!-- Résultats -->
+        <div class="card">
+            <h2>Résultats</h2>
+            
+            <div class="result-line">
+                <span>Chiffre d'Affaires Brut :</span>
+                <span id="affichageCa">0.00 €</span>
+            </div>
+            
+            <div class="result-line">
+                <span>Cotisation URSSAF :</span>
+                <span id="affichageUrssaf">- 0.00 €</span>
+            </div>
+            
+            <div class="result-line">
+                <span>Provision Impôt (IR) :</span>
+                <span id="affichageImpot">- 0.00 €</span>
+            </div>
+            
+            <div class="result-line net-result">
+                <span>Reste à vivre (Net) :</span>
+                <span id="affichageNet">0.00 €</span>
+            </div>
+            <p class="notes">L'impôt calculé représente la part exacte due à ton activité freelance, en tenant compte de tes autres revenus.</p>
+        </div>
+
+        <!-- Paramètres -->
+        <div class="card">
+            <h2>Paramètres (Sauvegardés)</h2>
+            <p class="notes">Ces données permettent au simulateur d'appliquer le barème de l'impôt sur le revenu avec précision.</p>
+            
+            <div class="checkbox-container">
+                <input type="checkbox" id="acreActive" onchange="sauvegarderParametres()">
+                <label for="acreActive" style="margin-top: 0;">Option ACRE activée</label>
+            </div>
+            
+            <label for="tauxUrssafNormal">Taux URSSAF standard (%)</label>
+            <input type="number" id="tauxUrssafNormal" step="0.1" value="25.6" oninput="sauvegarderParametres()">
+            
+            <label for="tauxUrssafAcre">Taux URSSAF avec ACRE (%)</label>
+            <input type="number" id="tauxUrssafAcre" step="0.1" value="19.2" oninput="sauvegarderParametres()">
+            
+            <label for="autresRevenus">Autres revenus nets mensuels (€)</label>
+            <p class="notes">Revenus locatifs, salaires, etc. (Sert de base pour le calcul des tranches d'imposition).</p>
+            <input type="number" id="autresRevenus" value="610" oninput="sauvegarderParametres()">
+        </div>
+
+    </div>
+
+    <script>
+        function chargerParametres() {
+            var tauxNormal = localStorage.getItem("tauxUrssafNormal");
+            if (tauxNormal != null) document.getElementById("tauxUrssafNormal").value = tauxNormal;
+
+            var tauxAcre = localStorage.getItem("tauxUrssafAcre");
+            if (tauxAcre != null) document.getElementById("tauxUrssafAcre").value = tauxAcre;
+
+            var autresRevenus = localStorage.getItem("autresRevenus");
+            if (autresRevenus != null) document.getElementById("autresRevenus").value = autresRevenus;
+
+            var acreActive = localStorage.getItem("acreActive");
+            if (acreActive == "oui") {
+                document.getElementById("acreActive").checked = true;
+            } else if (acreActive == "non") {
+                document.getElementById("acreActive").checked = false;
+            }
+        }
+
+        function sauvegarderParametres() {
+            localStorage.setItem("tauxUrssafNormal", document.getElementById("tauxUrssafNormal").value);
+            localStorage.setItem("tauxUrssafAcre", document.getElementById("tauxUrssafAcre").value);
+            localStorage.setItem("autresRevenus", document.getElementById("autresRevenus").value);
+            
+            if (document.getElementById("acreActive").checked == true) {
+                localStorage.setItem("acreActive", "oui");
+            } else {
+                localStorage.setItem("acreActive", "non");
+            }
+            calculerResultats();
+        }
+
+        // Fonction isolée pour calculer l'impôt selon le barème standard (1 part)
+        // L'utilisation de conditions en cascade (top-down) simplifie grandement la logique
+        function calculerImpotAnnuel(revenuNet) {
+            var impot = 0;
+
+            if (revenuNet > 177106) {
+                impot = impot + (revenuNet - 177106) * 0.45;
+                revenuNet = 177106;
+            }
+            if (revenuNet > 82341) {
+                impot = impot + (revenuNet - 82341) * 0.41;
+                revenuNet = 82341;
+            }
+            if (revenuNet > 28797) {
+                impot = impot + (revenuNet - 28797) * 0.30;
+                revenuNet = 28797;
+            }
+            if (revenuNet > 11294) {
+                impot = impot + (revenuNet - 11294) * 0.11;
+                revenuNet = 11294;
+            }
+            
+            return impot;
+        }
+
+        function calculerResultats() {
+            var tjm = parseFloat(document.getElementById("tjm").value);
+            var jours = parseFloat(document.getElementById("jours").value);
+
+            if (isNaN(tjm)) tjm = 0;
+            if (isNaN(jours)) jours = 0;
+
+            // 1. Calcul du Chiffre d'Affaires Brut Mensuel
+            var chiffreAffaires = tjm * jours;
+
+            // 2. Calcul URSSAF
+            var tauxUrssaf = 0;
+            if (document.getElementById("acreActive").checked == true) {
+                tauxUrssaf = parseFloat(document.getElementById("tauxUrssafAcre").value);
+            } else {
+                tauxUrssaf = parseFloat(document.getElementById("tauxUrssafNormal").value);
+            }
+            var montantUrssaf = chiffreAffaires * (tauxUrssaf / 100);
+
+            // 3. Calcul de l'Impôt sur le Revenu
+            var autresRevenusMensuels = parseFloat(document.getElementById("autresRevenus").value);
+            if (isNaN(autresRevenusMensuels)) autresRevenusMensuels = 0;
+
+            var autresRevenusAnnuels = autresRevenusMensuels * 12;
+            
+            // Abattement de 34% sur le CA BNC : le fisc n'impose que 66% des revenus
+            var beneficeBncAnnuel = (chiffreAffaires * 12) * 0.66;
+            var revenuGlobalAnnuel = autresRevenusAnnuels + beneficeBncAnnuel;
+
+            // On calcule l'impôt sur la totalité des revenus
+            var impotTotalAnnuel = calculerImpotAnnuel(revenuGlobalAnnuel);
+            
+            // On calcule l'impôt s'il n'avait QUE ses revenus locatifs
+            var impotSansFreelance = calculerImpotAnnuel(autresRevenusAnnuels);
+            
+            // La différence donne l'impôt généré uniquement par son travail de freelance
+            var impotLieAuFreelanceAnnuel = impotTotalAnnuel - impotSansFreelance;
+            
+            // On ramène cette provision au mois
+            var montantImpot = impotLieAuFreelanceAnnuel / 12;
+
+            // 4. Calcul du Net
+            var resteAVivre = chiffreAffaires - montantUrssaf - montantImpot;
+
+            // 5. Affichage
+            document.getElementById("affichageCa").innerText = chiffreAffaires.toFixed(2) + " €";
+            document.getElementById("affichageUrssaf").innerText = "- " + montantUrssaf.toFixed(2) + " €";
+            document.getElementById("affichageImpot").innerText = "- " + montantImpot.toFixed(2) + " €";
+            document.getElementById("affichageNet").innerText = resteAVivre.toFixed(2) + " €";
+        }
+
+        window.onload = function() {
+            chargerParametres();
+            calculerResultats();
+        };
+    </script>
+</body>
+</html>
