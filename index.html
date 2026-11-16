@@ -85,6 +85,11 @@
             padding-top: 15px;
             margin-top: 15px;
         }
+        .annual-stats {
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px dashed #ccc;
+        }
         .notes {
             font-size: 0.85rem;
             color: #666;
@@ -123,7 +128,7 @@
             <label for="tjm">Mon TJM (en euros)</label>
             <input type="number" id="tjm" placeholder="Ex: 350" oninput="calculerResultats()">
             
-            <label for="jours">Jours travaillés dans le mois</label>
+            <label for="jours">Jours travaillés dans ce mois</label>
             <input type="number" id="jours" placeholder="Ex: 15" oninput="calculerResultats()">
         </div>
 
@@ -150,16 +155,31 @@
                 <span id="affichageNet">0.00 €</span>
             </div>
             
-            <!-- Paragraphe dynamique pour le message -->
+            <!-- Paragraphe dynamique pour ton message privé -->
             <p id="messagePersonnalise" style="text-align: center; font-weight: bold; margin-top: 15px;"></p>
 
-            <p class="notes">L'impôt calculé représente la part exacte due à ton activité freelance, en tenant compte des hypothèses ci-dessous.</p>
+            <!-- Nouvelles statistiques annuelles -->
+            <div class="annual-stats">
+                <div class="result-line">
+                    <span style="font-size: 1rem; color: #444;">Impôt total annuel du foyer :</span>
+                    <span id="affichageImpotAnnuel" style="font-size: 1rem; font-weight: bold;">0.00 €</span>
+                </div>
+                <div class="result-line">
+                    <span style="font-size: 1rem; color: #444;">Tranche Marginale (TMI) :</span>
+                    <span id="affichageTmi" style="font-size: 1rem; font-weight: bold;">0 %</span>
+                </div>
+            </div>
+
+            <p class="notes" style="margin-top: 15px;">L'impôt calculé tient compte des hypothèses ci-dessous et répartit votre charge fiscale sur vos seuls mois travaillés.</p>
         </div>
 
         <div class="card">
             <h2>Hypothèses & Paramètres</h2>
-            <p class="notes">Modifie ces valeurs pour affiner le calcul. Elles sont sauvegardées sur ton téléphone.</p>
+            <p class="notes">Modifiez ces valeurs pour affiner le calcul.</p>
             
+            <label for="moisTravailles">Mois travaillés par an (Freelance)</label>
+            <input type="number" id="moisTravailles" placeholder="Ex: 12" oninput="sauvegarderParametres()">
+
             <div class="checkbox-container">
                 <input type="checkbox" id="acreActive" onchange="sauvegarderParametres()">
                 <label for="acreActive" style="margin-top: 0;">Option ACRE activée</label>
@@ -230,6 +250,11 @@
             if (revenusConjoint !== null) document.getElementById("revenusConjoint").value = revenusConjoint;
             else document.getElementById("revenusConjoint").value = "0";
 
+            // Chargement du nouveau paramètre "Mois travaillés"
+            var moisTravaillesSave = localStorage.getItem("moisTravailles");
+            if (moisTravaillesSave !== null) document.getElementById("moisTravailles").value = moisTravaillesSave;
+            else document.getElementById("moisTravailles").value = "11"; // Par défaut, un freelance prend au moins 1 mois de vacances !
+
             var acreActive = localStorage.getItem("acreActive");
             if (acreActive === "oui") {
                 document.getElementById("acreActive").checked = true;
@@ -252,6 +277,7 @@
             localStorage.setItem("tauxUrssafAcre", document.getElementById("tauxUrssafAcre").value);
             localStorage.setItem("revenusLocatifs", document.getElementById("revenusLocatifs").value);
             localStorage.setItem("revenusConjoint", document.getElementById("revenusConjoint").value);
+            localStorage.setItem("moisTravailles", document.getElementById("moisTravailles").value);
             
             if (document.getElementById("acreActive").checked === true) {
                 localStorage.setItem("acreActive", "oui");
@@ -293,13 +319,22 @@
         function calculerResultats() {
             var champTjm = document.getElementById("tjm");
             var champJours = document.getElementById("jours");
+            var champMois = document.getElementById("moisTravailles");
             
             var tjm = parseFloat(champTjm.value);
             var jours = parseFloat(champJours.value);
+            var moisTravailles = parseFloat(champMois.value);
 
+            // Sécurités basiques
             if (jours > 31) {
                 jours = 31;
                 champJours.value = 31;
+            }
+            
+            // Sécurité pour les mois travaillés dans l'année (max 12)
+            if (moisTravailles > 12) {
+                moisTravailles = 12;
+                champMois.value = 12;
             }
 
             if (champTjm.value !== "") {
@@ -310,6 +345,7 @@
 
             if (isNaN(tjm)) tjm = 0;
             if (isNaN(jours)) jours = 0;
+            if (isNaN(moisTravailles)) moisTravailles = 0;
             
             var chiffreAffaires = tjm * jours;
 
@@ -338,39 +374,61 @@
                 partsFiscales = 2;
             }
 
+            // Calcul sur l'année entière en fonction des mois réellement travaillés
             var autresRevenusAnnuels = autresRevenusMensuels * 12;
-            var beneficeBncAnnuel = (chiffreAffaires * 12) * 0.66;
+            var beneficeBncAnnuel = (chiffreAffaires * moisTravailles) * 0.66;
             var revenuGlobalAnnuel = autresRevenusAnnuels + beneficeBncAnnuel;
 
             var quotientGlobal = revenuGlobalAnnuel / partsFiscales;
-            var impotTotalAnnuel = calculerImpotAnnuel(quotientGlobal) * partsFiscales;
             
+            // Détermination de la Tranche Marginale d'Imposition (TMI)
+            var tmi = "0 %";
+            if (quotientGlobal > 177106) {
+                tmi = "45 %";
+            } else if (quotientGlobal > 82341) {
+                tmi = "41 %";
+            } else if (quotientGlobal > 28797) {
+                tmi = "30 %";
+            } else if (quotientGlobal > 11294) {
+                tmi = "11 %";
+            }
+
+            var impotTotalAnnuel = calculerImpotAnnuel(quotientGlobal) * partsFiscales;
             var quotientSansFreelance = autresRevenusAnnuels / partsFiscales;
             var impotSansFreelance = calculerImpotAnnuel(quotientSansFreelance) * partsFiscales;
-            
             var impotLieAuFreelanceAnnuel = impotTotalAnnuel - impotSansFreelance;
             
-            var montantImpot = impotLieAuFreelanceAnnuel / 12;
+            // On divise l'impôt généré par l'activité par le nombre de mois travaillés
+            // (S'il met de côté cette somme chaque mois travaillé, il aura le montant pile à la fin de l'année)
+            var montantImpot = 0;
+            if (moisTravailles > 0) {
+                montantImpot = impotLieAuFreelanceAnnuel / moisTravailles;
+            }
 
             var resteAVivre = chiffreAffaires - montantUrssaf - montantImpot;
 
+            // Affichage principal
             document.getElementById("affichageCa").innerText = chiffreAffaires.toFixed(2) + " €";
             document.getElementById("affichageUrssaf").innerText = "- " + montantUrssaf.toFixed(2) + " €";
             document.getElementById("affichageImpot").innerText = "- " + montantImpot.toFixed(2) + " €";
             document.getElementById("affichageNet").innerText = resteAVivre.toFixed(2) + " €";
 
+            // Affichage des stats annuelles
+            document.getElementById("affichageImpotAnnuel").innerText = impotTotalAnnuel.toFixed(2) + " €";
+            document.getElementById("affichageTmi").innerText = tmi;
+            
+            //Troll
             var champMessage = document.getElementById("messagePersonnalise");
-
             if (chiffreAffaires === 0) {
                 champMessage.innerText = ""; 
             } 
             else if (resteAVivre >= 10000) { 
                 champMessage.innerText = "Ah ouais ça vit hein 😎";
-                champMessage.style.color = "#1e8449"; // Vert
+                champMessage.style.color = "#1e8449"; 
             } 
             else if (resteAVivre <= 5000) { 
                 champMessage.innerText = "Damn !! MACRON EXPLOSION 💥";
-                champMessage.style.color = "#c0392b"; // Rouge
+                champMessage.style.color = "#c0392b"; 
             } 
             else {
                 champMessage.innerText = "";
